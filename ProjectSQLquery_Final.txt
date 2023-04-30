@@ -1,0 +1,336 @@
+
+CREATE DATABASE electricity_;
+USE electricity_;
+
+SELECT * FROM rural_pop;
+SELECT * FROM total_pop;
+SELECT * FROM urban_pop;
+SELECT * FROM nuclear;
+SELECT * FROM oil;
+SELECT * FROM power_losses;
+SELECT * FROM renewable;
+
+
+--------------1---------------------
+SELECT Country_Name, Year, total_ AS total_access_percent FROM (
+SELECT Country_Name, [T_2000], [T_2001], [T_2002], [T_2003], [T_2004], [T_2005], [T_2006], [T_2007], [T_2008], [T_2009], [T_2010], 
+[T_2011], [T_2012], [T_2013], [T_2014], [T_2015], [T_2016], [T_2017], [T_2018], [T_2019], [T_2020]
+FROM total_pop) A
+
+UNPIVOT
+(
+total_ FOR [Year] IN ([T_2000], [T_2001], [T_2002], [T_2003], [T_2004], [T_2005], [T_2006], [T_2007], [T_2008], [T_2009], [T_2010], 
+[T_2011], [T_2012], [T_2013], [T_2014], [T_2015], [T_2016], [T_2017], [T_2018], [T_2019], [T_2020])
+) 
+AS unpvt
+ORDER BY Country_Name;
+
+
+
+-------------2------------
+SELECT Country_Name, Year, total_ AS total_access_percent FROM (
+SELECT Country_Name, [T_2000], [T_2001], [T_2002], [T_2003], [T_2004], [T_2005], [T_2006], [T_2007], [T_2008], [T_2009], [T_2010], 
+[T_2011], [T_2012], [T_2013], [T_2014], [T_2015], [T_2016], [T_2017], [T_2018], [T_2019], [T_2020]
+FROM total_pop) A
+
+UNPIVOT
+(
+total_ FOR [Year] IN ([T_2000], [T_2001], [T_2002], [T_2003], [T_2004], [T_2005], [T_2006], [T_2007], [T_2008], [T_2009], [T_2010], 
+[T_2011], [T_2012], [T_2013], [T_2014], [T_2015], [T_2016], [T_2017], [T_2018], [T_2019], [T_2020])
+) 
+AS unpvt
+WHERE Country_Name = 'India';
+
+
+
+------------3------------------
+SELECT * FROM total_pop;
+
+select *,
+Avg (access_percent) over (partition by year ) as World_Avg_per_year,
+((access_percent/Avg (access_percent) over (partition by year ))*100) as Access_Compare_To_World_AVG
+from (
+SELECT Country_Name, Year, access AS access_percent FROM (
+SELECT Country_Name, [T_2000], [T_2001], [T_2002], [T_2003], [T_2004], [T_2005], [T_2006], [T_2007], [T_2008], [T_2009], [T_2010], 
+[T_2011], [T_2012], [T_2013], [T_2014], [T_2015], [T_2016], [T_2017], [T_2018], [T_2019], [T_2020]
+from total_pop ) as a
+unpivot                       
+(access for [Year] in 
+    ([T_2000], [T_2001], [T_2002], [T_2003], [T_2004], [T_2005], [T_2006], [T_2007], [T_2008], [T_2009], [T_2010], 
+[T_2011], [T_2012], [T_2013], [T_2014], [T_2015], [T_2016], [T_2017], [T_2018], [T_2019], [T_2020])
+) 
+as unpvt ) as x
+
+
+-----------4----------------
+SELECT * FROM rural_pop;
+
+select Year, count(Country_Name) as Count_of_countries from (
+select country_name, Year, accsess as access_percent from (
+select Country_Name, [R_2000], [R_2001], [R_2002], [R_2003], [R_2004], [R_2005], [R_2006], [R_2007], [R_2008], [R_2009], [R_2010], 
+[R_2011], [R_2012], [R_2013], [R_2014], [R_2015], [R_2016], [R_2017], [R_2018], [R_2019], [R_2020]
+from rural_pop ) as a
+unpivot                      
+(accsess for [Year] in 
+    ([R_2000], [R_2001], [R_2002], [R_2003], [R_2004], [R_2005], [R_2006], [R_2007], [R_2008], [R_2009], [R_2010], 
+[R_2011], [R_2012], [R_2013], [R_2014], [R_2015], [R_2016], [R_2017], [R_2018], [R_2019], [R_2020])
+) as unpvt ) as x
+where access_percent  >= 75
+group by Year
+order by Year
+
+
+
+
+-------------5----------------
+SELECT M.Region, M.IncomeGroup, Country_Name, Country_Code, [Y_2000], [Y_2001], [Y_2002], [Y_2003], [Y_2004], [Y_2005], [Y_2006], [Y_2007], [Y_2008], [Y_2009], [Y_2010]
+, [Y_2011], [Y_2012], [Y_2013], [Y_2014], [Y_2015]
+FROM nuclear_Y as N
+JOIN Metadata_Country AS M
+ON N.Country_Code = M.CountryCode
+GROUP BY Region, IncomeGroup, Country_Name, Country_Code, [Y_2000], [Y_2001], [Y_2002], [Y_2003], [Y_2004], [Y_2005], [Y_2006], [Y_2007], [Y_2008], [Y_2009], [Y_2010]
+, [Y_2011], [Y_2012], [Y_2013], [Y_2014], [Y_2015]
+ORDER BY Region, IncomeGroup, Country_Name
+
+
+
+
+
+
+---------------6------------------------
+select  n.Year, Avg(n.production_percent) as production_percent_from_nuclear, Avg(o.production_percent) as production_percent_from_oil,
+(100- Avg(n.production_percent)- Avg(o.production_percent)) as production_percent_from_other
+from (
+select y.Country_Name, y.Year, production as production_percent from (
+select Country_Name, [Y_2000], [Y_2001], [Y_2002], [Y_2003], [Y_2004], [Y_2005], [Y_2006], [Y_2007], [Y_2008], [Y_2009], [Y_2010]
+, [Y_2011], [Y_2012], [Y_2013], [Y_2014], [Y_2015]
+from nuclear_Y ) as a
+unpivot                       
+(production for [Year] in 
+    ([Y_2000], [Y_2001], [Y_2002], [Y_2003], [Y_2004], [Y_2005], [Y_2006], [Y_2007], [Y_2008], [Y_2009], [Y_2010]
+, [Y_2011], [Y_2012], [Y_2013], [Y_2014], [Y_2015])
+) as y ) as n
+
+join  ---Joining nuclear source data and oil source data
+
+(select country_name, Year, production as production_percent from (
+select Country_Name, [Y_2000], [Y_2001], [Y_2002], [Y_2003], [Y_2004], [Y_2005], [Y_2006], [Y_2007], [Y_2008], [Y_2009], [Y_2010]
+, [Y_2011], [Y_2012], [Y_2013], [Y_2014], [Y_2015]
+from oil_Y ) as a
+unpivot             
+(production for [Year] in 
+    ([Y_2000], [Y_2001], [Y_2002], [Y_2003], [Y_2004], [Y_2005], [Y_2006], [Y_2007], [Y_2008], [Y_2009], [Y_2010]
+, [Y_2011], [Y_2012], [Y_2013], [Y_2014], [Y_2015])
+) as x ) o
+on n.Country_Name =o.Country_Name
+where n.Country_Name =o.Country_Name and n.Year = o.Year
+group by n.Year
+order by n.Year
+
+
+
+
+
+
+-----------INSIGHT 1 (a)---------------
+SELECT Country_Name, AVG(total_access_percent) AS avg_access_post_2000 FROM(
+SELECT Country_Name, Year, total_ AS total_access_percent FROM (
+SELECT Country_Name, [T_2000], [T_2001], [T_2002], [T_2003], [T_2004], [T_2005], [T_2006], [T_2007], [T_2008], [T_2009], [T_2010], 
+[T_2011], [T_2012], [T_2013], [T_2014], [T_2015], [T_2016], [T_2017], [T_2018], [T_2019], [T_2020]
+FROM total_pop) A
+
+UNPIVOT
+(
+total_ FOR [Year] IN ([T_2000], [T_2001], [T_2002], [T_2003], [T_2004], [T_2005], [T_2006], [T_2007], [T_2008], [T_2009], [T_2010], 
+[T_2011], [T_2012], [T_2013], [T_2014], [T_2015], [T_2016], [T_2017], [T_2018], [T_2019], [T_2020])
+) 
+AS unpvt) X
+GROUP BY Country_Name
+ORDER BY avg_access_post_2000 DESC;
+
+
+--------INSIGHT 1(b)----------
+SELECT Country_Name, AVG(rural_access_percent) AS avg_access_post_2000 FROM(
+SELECT Country_Name, Year, rural_ AS rural_access_percent FROM (
+SELECT Country_Name, [R_2000], [R_2001], [R_2002], [R_2003], [R_2004], [R_2005], [R_2006], [R_2007], [R_2008], [R_2009], [R_2010], 
+[R_2011], [R_2012], [R_2013], [R_2014], [R_2015], [R_2016], [R_2017], [R_2018], [R_2019], [R_2020]
+FROM rural_pop) A
+
+UNPIVOT
+(
+rural_ FOR [Year] IN ([R_2000], [R_2001], [R_2002], [R_2003], [R_2004], [R_2005], [R_2006], [R_2007], [R_2008], [R_2009], [R_2010], 
+[R_2011], [R_2012], [R_2013], [R_2014], [R_2015], [R_2016], [R_2017], [R_2018], [R_2019], [R_2020])
+) 
+AS unpvt) X
+GROUP BY Country_Name
+ORDER BY avg_access_post_2000 DESC;
+
+
+-------INSIGHTS 1 (c) -----------
+SELECT Country_Name, AVG(urban_access_percent) AS avg_access_post_2000 FROM(
+SELECT Country_Name, Year, urban_ AS urban_access_percent FROM (
+SELECT Country_Name, [U_2000], [U_2001], [U_2002], [U_2003], [U_2004], [U_2005], [U_2006], [U_2007], [U_2008], [U_2009], [U_2010], 
+[U_2011], [U_2012], [U_2013], [U_2014], [U_2015], [U_2016], [U_2017], [U_2018], [U_2019], [U_2020]
+FROM urban_pop) A
+
+UNPIVOT
+(
+urban_ FOR [Year] IN ([U_2000], [U_2001], [U_2002], [U_2003], [U_2004], [U_2005], [U_2006], [U_2007], [U_2008], [U_2009], [U_2010], 
+[U_2011], [U_2012], [U_2013], [U_2014], [U_2015], [U_2016], [U_2017], [U_2018], [U_2019], [U_2020])
+) 
+AS unpvt) X
+GROUP BY Country_Name
+ORDER BY avg_access_post_2000 DESC;
+
+
+INSIGHT 02------------------
+
+------(a)----------
+
+SELECT Country_Name, T_2000, T_2020 FROM total_pop 
+ORDER BY Country_Name;
+
+---------(b)---------
+SELECT Country_Name, R_2000, R_2020 FROM rural_pop 
+ORDER BY Country_Name;
+
+--------(c)-----------
+SELECT Country_Name, U_2000, U_2020 FROM urban_pop 
+ORDER BY Country_Name;
+
+
+
+INSIGHT 03----------------------
+(a)
+SELECT * INTO table_world_avg from(
+select *,
+Avg (access_percent) over (partition by year ) as World_Avg_per_year,
+((access_percent/Avg (access_percent) over (partition by year ))*100) as Access_Compare_To_World_AVG
+from (
+SELECT Country_Name, Year, access AS access_percent FROM (
+SELECT Country_Name, [T_2000], [T_2001], [T_2002], [T_2003], [T_2004], [T_2005], [T_2006], [T_2007], [T_2008], [T_2009], [T_2010], 
+[T_2011], [T_2012], [T_2013], [T_2014], [T_2015], [T_2016], [T_2017], [T_2018], [T_2019], [T_2020]
+from total_pop ) as a
+unpivot                       
+(access for [Year] in 
+    ([T_2000], [T_2001], [T_2002], [T_2003], [T_2004], [T_2005], [T_2006], [T_2007], [T_2008], [T_2009], [T_2010], 
+[T_2011], [T_2012], [T_2013], [T_2014], [T_2015], [T_2016], [T_2017], [T_2018], [T_2019], [T_2020])
+) 
+as unpvt ) as x) s;
+
+SELECT * FROM table_world_avg WHERE Access_Compare_To_World_AVG >= 100 AND Year = 'T_2000';
+SELECT * FROM table_world_avg WHERE Access_Compare_To_World_AVG >= 100 AND Year = 'T_2020';
+
+(b) -----------------
+SELECT * INTO table_world_avg_rural from(
+select *,
+Avg (access_percent) over (partition by year ) as World_Avg_per_year,
+((access_percent/Avg (access_percent) over (partition by year ))*100) as Access_Compare_To_World_AVG
+from (
+SELECT Country_Name, Year, access AS access_percent FROM (
+SELECT Country_Name, [R_2000], [R_2001], [R_2002], [R_2003], [R_2004], [R_2005], [R_2006], [R_2007], [R_2008], [R_2009], [R_2010], 
+[R_2011], [R_2012], [R_2013], [R_2014], [R_2015], [R_2016], [R_2017], [R_2018], [R_2019], [R_2020]
+from rural_pop ) as a
+unpivot                       
+(access for [Year] in 
+    ([R_2000], [R_2001], [R_2002], [R_2003], [R_2004], [R_2005], [R_2006], [R_2007], [R_2008], [R_2009], [R_2010], 
+[R_2011], [R_2012], [R_2013], [R_2014], [R_2015], [R_2016], [R_2017], [R_2018], [R_2019], [R_2020])
+) 
+as unpvt ) as x) s;
+
+SELECT * FROM table_world_avg_rural WHERE Access_Compare_To_World_AVG >= 100 AND Year = 'R_2000';
+SELECT * FROM table_world_avg_rural WHERE Access_Compare_To_World_AVG >= 100 AND Year = 'R_2020';
+
+
+(c)----------------
+SELECT * INTO table_world_avg_urban from(
+select *,
+Avg (access_percent) over (partition by year ) as World_Avg_per_year,
+((access_percent/Avg (access_percent) over (partition by year ))*100) as Access_Compare_To_World_AVG
+from (
+SELECT Country_Name, Year, access AS access_percent FROM (
+SELECT Country_Name, [U_2000], [U_2001], [U_2002], [U_2003], [U_2004], [U_2005], [U_2006], [U_2007], [U_2008], [U_2009], [U_2010], 
+[U_2011], [U_2012], [U_2013], [U_2014], [U_2015], [U_2016], [U_2017], [U_2018], [U_2019], [U_2020]
+from urban_pop ) as a
+unpivot                       
+(access for [Year] in 
+    ([U_2000], [U_2001], [U_2002], [U_2003], [U_2004], [U_2005], [U_2006], [U_2007], [U_2008], [U_2009], [U_2010], 
+[U_2011], [U_2012], [U_2013], [U_2014], [U_2015], [U_2016], [U_2017], [U_2018], [U_2019], [U_2020])
+) 
+as unpvt ) as x) s;
+
+SELECT * FROM table_world_avg_urban WHERE Access_Compare_To_World_AVG >= 100 AND Year = 'U_2000';
+SELECT * FROM table_world_avg_urban WHERE Access_Compare_To_World_AVG >= 100 AND Year = 'U_2020';
+
+
+--------------INSIGHT 4 ------------------------
+
+SELECT Country_Name, AVG(production_percent) AS production_post_2000 FROM(
+SELECT Country_Name, Year, production_ AS production_percent FROM (
+SELECT Country_Name, [nuc_2000], [nuc_2001], [nuc_2002], [nuc_2003], [nuc_2004], [nuc_2005], [nuc_2006], [nuc_2007], [nuc_2008], [nuc_2009], [nuc_2010], 
+[nuc_2011], [nuc_2012], [nuc_2013], [nuc_2014], [nuc_2015]
+FROM nuclear) A
+
+UNPIVOT
+(
+production_ FOR [Year] IN ([nuc_2000], [nuc_2001], [nuc_2002], [nuc_2003], [nuc_2004], [nuc_2005], [nuc_2006], [nuc_2007], [nuc_2008], [nuc_2009], [nuc_2010], 
+[nuc_2011], [nuc_2012], [nuc_2013], [nuc_2014], [nuc_2015])
+) 
+AS unpvt) X
+GROUP BY Country_Name
+ORDER BY production_post_2000 DESC;
+
+
+
+
+--------------INSIGHT - 05 --------------------------
+SELECT Country_Name, AVG(production_percent) AS production_post_2000 FROM(
+SELECT Country_Name, Year, production_ AS production_percent FROM (
+SELECT Country_Name, [oil_2000], [oil_2001], [oil_2002], [oil_2003], [oil_2004], [oil_2005], [oil_2006], [oil_2007], [oil_2008], [oil_2009], [oil_2010], 
+[oil_2011], [oil_2012], [oil_2013], [oil_2014], [oil_2015]
+FROM oil) A
+
+UNPIVOT
+(
+production_ FOR [Year] IN ([oil_2000], [oil_2001], [oil_2002], [oil_2003], [oil_2004], [oil_2005], [oil_2006], [oil_2007], [oil_2008], [oil_2009], [oil_2010], 
+[oil_2011], [oil_2012], [oil_2013], [oil_2014], [oil_2015])
+) 
+AS unpvt) X
+GROUP BY Country_Name
+ORDER BY production_post_2000 DESC;
+
+
+-------------INSIGHT 06------------------------
+
+SELECT Country_Name, AVG(production_kwh) AS production_post_2000 FROM(
+SELECT Country_Name, Year, production_ AS production_kwh FROM (
+SELECT Country_Name, [ren_2000], [ren_2001], [ren_2002], [ren_2003], [ren_2004], [ren_2005], [ren_2006], [ren_2007], [ren_2008], [ren_2009], [ren_2010], 
+[ren_2011], [ren_2012], [ren_2013], [ren_2014], [ren_2015]
+FROM renewable) A
+
+UNPIVOT
+(
+production_ FOR [Year] IN ([ren_2000], [ren_2001], [ren_2002], [ren_2003], [ren_2004], [ren_2005], [ren_2006], [ren_2007], [ren_2008], [ren_2009], [ren_2010], 
+[ren_2011], [ren_2012], [ren_2013], [ren_2014], [ren_2015])
+) 
+AS unpvt) X
+GROUP BY Country_Name
+ORDER BY production_post_2000 DESC;
+
+--------------INSIGHT 07--------------------
+
+select *,
+Avg (prod_kwh) over (partition by year ) as World_Avg_per_year
+from (
+SELECT Country_Name, Year, prod AS prod_kwh FROM (
+SELECT Country_Name, [ren_2000], [ren_2001], [ren_2002], [ren_2003], [ren_2004], [ren_2005], [ren_2006], [ren_2007], [ren_2008], [ren_2009], [ren_2010], 
+[ren_2011], [ren_2012], [ren_2013], [ren_2014], [ren_2015]
+from renewable ) as a
+unpivot                       ---unpivot is used to convert data columns to rows for performing aggregations
+(prod for [Year] in 
+    ([ren_2000], [ren_2001], [ren_2002], [ren_2003], [ren_2004], [ren_2005], [ren_2006], [ren_2007], [ren_2008], [ren_2009], [ren_2010], 
+[ren_2011], [ren_2012], [ren_2013], [ren_2014], [ren_2015])
+) 
+as unpvt ) as x
+
+
